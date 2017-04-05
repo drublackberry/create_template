@@ -98,9 +98,6 @@ os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'con
 os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
 
-# TODO: Git init the project and link to remote directory
-
-
 # Create a README file
 text_file = open(os.path.join(PROJECT_DIR, "README.md"), "w")
 text_file.write("## Project "+PROJECT_NAME+"\n")
@@ -115,4 +112,19 @@ text_file.close()
 # Store the environment variables in a json file
 with open(os.path.join(PROJECT_DIR,'config', 'project_vars.json'), 'w') as fp:
 	json.dump(var_dict,fp, indent=4, sort_keys=True)
+
+# Configure git
+try:
+	os.chdir(PROJECT_DIR)
+	print(os.getcwd())
+	os.system("git init")
+	os.system("git add .")
+	os.system("git commit -m \"First commit from project creation \"")
+	REMOTE_GIT_ADD = input("Add remote git repository? ([y]/n)")
+	if REMOTE_GIT_ADD.lower() == 'y' or REMOTE_GIT_ADD == '':
+		REMOTE_GIT = input("Enter remote address: ")
+		os.system("git remote add origin "+REMOTE_GIT)
+		os.system("git push -u origin master")
+except:
+	print ("[ERROR] Git not installed or not configured. Try manually after intallation")
 
