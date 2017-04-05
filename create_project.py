@@ -86,6 +86,7 @@ while not src_ok:
 			src_ok = True
 	else:
 		os.makedirs(os.path.join(PROJECT_DIR, 'src'))
+		os.system("cp ./support/template/__init__.py "+os.path.join(PROJECT_DIR,'src'))
 		confirm_var ('SRC_DIR', os.path.join(PROJECT_DIR, 'src'))
 		src_ok = True
 
@@ -101,7 +102,7 @@ os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
 # Create a README file
 text_file = open(os.path.join(PROJECT_DIR, "README.md"), "w")
 text_file.write("## Project "+PROJECT_NAME+"\n")
-text_file.write(DESCRIPTION+"\n")
+text_file.write(DESCRIPTION+"\n\n\n")
 text_file.write("Author: "+AUTHOR_NAME+" ("+AUTHOR_MAIL+")\n")
 text_file.write("## Dependencies\n")
 text_file.write("* Needs python 3 to execute the installation script\n")
@@ -120,11 +121,11 @@ try:
 	os.system("git init")
 	os.system("git add .")
 	os.system("git commit -m \"First commit from project creation \"")
-	REMOTE_GIT_ADD = input("Add remote git repository? ([y]/n)")
+	REMOTE_GIT_ADD = input("Add remote git repository? ([y]/n): ")
 	if REMOTE_GIT_ADD.lower() == 'y' or REMOTE_GIT_ADD == '':
 		REMOTE_GIT = input("Enter remote address: ")
 		os.system("git remote add origin "+REMOTE_GIT)
 		os.system("git push -u origin master")
 except:
-	print ("[ERROR] Git not installed or not configured. Try manually after intallation")
+	print ("[ERROR] Git not installed or not configured. Try manually.")
 
