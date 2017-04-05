@@ -51,8 +51,17 @@ while not dir_ok:
 		raise_error("Selected directory already exists, choose a different one")
 
 # Create all the folders needed in the selected directory
-subfolder_list = ['figures', 'notebook', 'output', 'config']
-foo = [os.makedirs(os.path.join(PROJECT_DIR, x)) for x in subfolder_list]
+folder_list = ['figures', 'notebook', 'output', 'config', 'data']
+foo = [os.makedirs(os.path.join(PROJECT_DIR, x)) for x in folder_list]
+
+subfolder_dict = { 'config':['scripts'], 'data': ['in', 'out', 'tmp']}
+for i in subfolder_dict.keys():
+	for j in subfolder_dict[i]:
+		print (i)
+		print (j)
+		os.makedirs(os.path.join(PROJECT_DIR, i, j))
+
+
 
 # Create a specific conda environment
 python_ok = False
