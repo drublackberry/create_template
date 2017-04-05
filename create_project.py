@@ -92,6 +92,7 @@ while not src_ok:
 # Copy the scripts and default items
 os.system("cp ./support/template/conda_setup.json "+os.path.join(PROJECT_DIR,'config'))
 os.system("cp ./support/template/.gitignore "+os.path.join(PROJECT_DIR))
+os.system("cp ./support/template/wiki.md "+os.path.join(PROJECT_DIR, 'wiki'))
 os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
@@ -114,6 +115,4 @@ text_file.close()
 # Store the environment variables in a json file
 with open(os.path.join(PROJECT_DIR,'config', 'project_vars.json'), 'w') as fp:
 	json.dump(var_dict,fp, indent=4, sort_keys=True)
-
-
 
