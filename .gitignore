@@ -1,0 +1,33 @@
+# Default extensions that will not be put on git
+# Packages
+*.zip
+*.7z
+*.rar
+*.iso
+*.tar
+*.gz
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# OS files
+*.DS_Store
+*.DS_Store?
+Thumbs.db
+
+# Backup files from editors
+*.pyc
+*.save
+*~
+*.swp
+
+# Images from reports
+*.png
+*.jpg
+
+# Text files and csv files
+*.csv
+*.txt
+*.dat
