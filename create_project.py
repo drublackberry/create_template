@@ -97,6 +97,7 @@ os.system("cp ./support/template/wiki.md "+os.path.join(PROJECT_DIR, 'wiki'))
 os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
+os.system("cp ./support/scripts/get_env_dir.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
 
 # Create a README file
