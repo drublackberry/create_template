@@ -51,14 +51,11 @@ while not dir_ok:
 		raise_error("Selected directory already exists, choose a different one")
 
 # Create all the folders needed in the selected directory
-folder_list = ['figures', 'notebook', 'output', 'config', 'data']
+folder_list = ['figures', 'notebook', 'output', 'config', 'data', 'test', 'wiki']
 foo = [os.makedirs(os.path.join(PROJECT_DIR, x)) for x in folder_list]
-
 subfolder_dict = { 'config':['scripts'], 'data': ['in', 'out', 'tmp']}
 for i in subfolder_dict.keys():
 	for j in subfolder_dict[i]:
-		print (i)
-		print (j)
 		os.makedirs(os.path.join(PROJECT_DIR, i, j))
 
 
@@ -92,25 +89,26 @@ while not src_ok:
 		confirm_var ('SRC_DIR', os.path.join(PROJECT_DIR, 'src'))
 		src_ok = True
 
-# Copy the conda setup into the config folder
+# Copy the scripts and default items
 os.system("cp ./support/template/conda_setup.json "+os.path.join(PROJECT_DIR,'config'))
-os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config'))
-os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config'))
-os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config'))
+os.system("cp ./support/template/.gitignore "+os.path.join(PROJECT_DIR))
+os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
+os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
+os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
 
 # TODO: Git init the project and link to remote directory
 
 
-# TODO: Create a README file
+# Create a README file
 text_file = open(os.path.join(PROJECT_DIR, "README.md"), "w")
 text_file.write("## Project "+PROJECT_NAME+"\n")
 text_file.write(DESCRIPTION+"\n")
-text_file.write("Author = "+AUTHOR_NAME+" ("+AUTHOR_MAIL+")\n")
+text_file.write("Author: "+AUTHOR_NAME+" ("+AUTHOR_MAIL+")\n")
 text_file.write("## Dependencies\n")
 text_file.write("* Needs python 3 to execute the installation script\n")
 text_file.write("* Needs conda to manage virtual environments\n")
-text_file.write("* Virtual environment dependencies can be found in config/conda_setup.json")
+text_file.write("* Virtual environment dependencies can be found in config/conda_setup.json\n")
 text_file.close()
 
 # Store the environment variables in a json file
