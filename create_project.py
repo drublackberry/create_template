@@ -75,20 +75,25 @@ while not python_ok:
 			raise_error("Conda environment could not be created, see log for errors")
 
 # Create a pointer in src to the codebase
-src_ok = False
-while not src_ok:
-	create_src = input("Create a link to external codebase ([y]/n)?: ")
-	if create_src == "y" or create_src=="":
-		SRC_DIR = input("Type the directory where the codebase is: ")
-		if SRC_DIR != "":
-			os.system("ln -s "+SRC_DIR + " " + os.path.join(PROJECT_DIR, 'src'))
-			confirm_var ('SRC_DIR', SRC_DIR)
-			src_ok = True
-	else:
-		os.makedirs(os.path.join(PROJECT_DIR, 'src'))
-		os.system("cp ./support/template/__init__.py "+os.path.join(PROJECT_DIR,'src'))
-		confirm_var ('SRC_DIR', os.path.join(PROJECT_DIR, 'src'))
-		src_ok = True
+os.makedirs(os.path.join(PROJECT_DIR, 'src'))
+os.system("cp ./support/template/__init__.py "+os.path.join(PROJECT_DIR,'src'))
+PYTHONPATH_LIST = [os.path.join(PROJECT_DIR, 'src')]
+use_external = input("Use external codebase ([y]/n)?: ")
+if use_external=="y" or use_external=="":
+	src_ok = False
+	while not src_ok:
+		new_src_dir = input("Type the directory where the codebase is: ")
+		if new_src_dir != "":
+			PYTHONPATH_LIST.append(new_src_dir)
+			add_more = input ("Add another external codebase? (y/[n])?: ")
+			if add_more.lower() == 'y':
+				src_ok = False
+			else:
+				src_ok = True
+		else:
+			print ("Not valid. External codebase cannot be left empty")
+print ("External codebases can be added later on to PYTHONPATH manager in project_vars.json")
+confirm_var ('PYTHONPATH_LIST', PYTHONPATH_LIST)
 
 # Copy the scripts and default items
 os.system("cp ./support/template/conda_setup.json "+os.path.join(PROJECT_DIR,'config'))
@@ -98,6 +103,7 @@ os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config', 
 os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_dir.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
+os.system("cp ./support/scripts/get_env_pythonpath.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
 
 # Create a README file
