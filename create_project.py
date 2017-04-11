@@ -114,7 +114,8 @@ text_file.write("Author: "+AUTHOR_NAME+" ("+AUTHOR_MAIL+")\n")
 text_file.write("## Dependencies\n")
 text_file.write("* Needs python 3 to execute the installation script\n")
 text_file.write("* Needs conda to manage virtual environments\n")
-text_file.write("* Virtual environment dependencies can be found in config/conda_setup.json\n")
+text_file.write("* Virtual environment dependencies can be found in config/conda_setup.json\n\n")
+text_file.write("Project template created with Wet Gremlin (https://github.com/drublackberry/wet-gremlin\n")
 text_file.close()
 
 # Store the environment variables in a json file
