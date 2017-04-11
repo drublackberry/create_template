@@ -21,7 +21,7 @@ def confirm_var (var, value):
 
 
 # Prompt for project variables
-print ("Project template utility")
+print ("Welcome to Wet Gremlin, an utility to create project environments.")
 PROJECT_NAME = input("Please enter the project name []: ")
 if PROJECT_NAME == "":
 	raise_error("The project name cannot be left empty")
