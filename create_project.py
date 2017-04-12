@@ -20,20 +20,112 @@ def confirm_var (var, value):
 	var_dict[var] = value
 
 
-# Prompt for project variables
-print ("Welcome to Wet Gremlin, an utility to create project environments.")
-PROJECT_NAME = input("Please enter the project name []: ")
-if PROJECT_NAME == "":
-	raise_error("The project name cannot be left empty")
-confirm_var('PROJECT_NAME', PROJECT_NAME) 
+class ConfigVar(object):
 
-# Prompt for author and email
-AUTHOR_NAME = input("Enter author's name: ")
-confirm_var('AUTHOR_NAME', AUTHOR_NAME)
-AUTHOR_MAIL = input("Enter author's email: ")
-confirm_var('AUTHOR_MAIL', AUTHOR_MAIL)
-DESCRIPTION = input("Enter the project description: ")
-confirm_var('DESCRIPTION', DESCRIPTION)
+    def __init__(self, name, f_default=None, description="", prompt=""):
+        self.name = name
+        self.description = description
+        self.prompt = prompt
+        if f_default is None:
+            f_default = lambda setup: None
+        self.default = property(fget=f_default)
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+class Config(object):
+
+    def __init__(self, interact=True):
+        self.variables = []
+        self.interact = interact
+
+    def add_variable(self, var):
+        assert all((var.name != v.name for v in self.variables))
+        self.variables.append(var)
+
+    def evaluate(self, dct):
+        values = VarDict(debug=DEBUG)
+        for v in self.variables:
+            val = None
+            if v.name in dct:
+                val = dct[v.name]
+            else:
+                val = v.default(values)
+                if self.interact:
+                    val = prompt_var(v, default=val)
+            if val is None:
+                raise RuntimeError("No value given for variable {0}".format(v.name))
+
+
+def prompt_var(v, default=None):
+    p = v.prompt
+    if not p:
+        p = v.name
+
+    s = "Enter {0}".format(p)
+    if default is not None:
+        s = " ".join([s, "[{0}]"])
+    s = " ".join([s, ":"])
+
+    return input(s)
+
+
+
+class VarDict(object):
+
+    def __init__(self, debug=False):
+        self.var_dict = {}
+        self.debug = debug
+
+    def __setitem__(self, key, value):
+        if self.debug:
+            print("DEBUG: {0} = {1}".format(key, value))
+        self.var_dict[key] = value
+
+    def __getattr__(self, name):
+        return getattr(self.var_dict, name)
+
+
+CONFIG = Config()
+CONFIG.add_variable(ConfigVar("PROJECT_NAME", prompt="project's name"))
+CONFIG.add_variable(ConfigVar("AUTHOR_NAME", prompt="author's name"))
+CONFIG.add_variable(ConfigVar("AUTHOR_MAIL", prompt="author's email"))
+CONFIG.add_variable(ConfigVar("DESCRIPTION", prompt="project description"))
+
+home = os.path.userexpand("~")
+defdir = lambda vals: os.path.join(home, "Documents", vals["PROJECT_NAME"])
+
+CONFIG.add_variable(ConfigVar("PROJECT_DIR", prompt="project directory", f_default=defdir))
+
+
+def main(args):
+    print("Welcome to Wet Gremlin, a utility to create project environments.")
+
+    dct = {}
+    if args.f:
+        if not os.path.exists(args.f):
+            raise ValueError("Invalid config file: {0}".format(args.f))
+        with open(args.f) as fp:
+            exec(fp.read(), dct)
+
+    var_dict = CONFIG.evaluate(dct)
+
+
+
+# # Prompt for project variables
+# PROJECT_NAME = input("Please enter the project name []: ")
+# if PROJECT_NAME == "":
+# 	raise_error("The project name cannot be left empty")
+# confirm_var('PROJECT_NAME', PROJECT_NAME)
+
+# # Prompt for author and email
+# AUTHOR_NAME = input("Enter author's name: ")
+# confirm_var('AUTHOR_NAME', AUTHOR_NAME)
+# AUTHOR_MAIL = input("Enter author's email: ")
+# confirm_var('AUTHOR_MAIL', AUTHOR_MAIL)
+# DESCRIPTION = input("Enter the project description: ")
+# confirm_var('DESCRIPTION', DESCRIPTION)
 
 
 # Project folder
@@ -136,4 +228,3 @@ try:
 		os.system("git push -u origin master")
 except:
 	print ("[ERROR] Git not installed or not configured. Try manually.")
-
