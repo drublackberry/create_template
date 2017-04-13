@@ -10,7 +10,7 @@ import sys
 import shutil
 import argparse
 
-DEBUG = False
+DEBUG = True
 WGPATH = os.path.dirname(os.path.realpath(__file__))
 
 class ConfigVar(object):
@@ -25,7 +25,10 @@ class ConfigVar(object):
         self.prompt = prompt
         if f_default is None:
             f_default = lambda setup: None
-        self.default = property(fget=f_default)
+        self.default = f_default
+
+    def __repr__(self):
+        return "ConfigVar {0}".format(self.name)
 
     def __hash__(self):
         return hash(self.name)
@@ -57,6 +60,8 @@ class Config(object):
                     val = prompt_var(v, default=val)
             if val is None:
                 raise RuntimeError("No value given for variable {0}".format(v.name))
+            values[v] = val
+        return values
 
 
 def prompt_var(v, default=None):
@@ -70,10 +75,14 @@ def prompt_var(v, default=None):
 
     s = "Enter {0}".format(p)
     if default is not None:
-        s = " ".join([s, "[{0}]"])
+        s = " ".join([s, "[{0}]".format(default)])
     s = " ".join([s, ":"])
 
-    return input(s)
+    val = input(s)
+    if not val:
+        val = default
+
+    return val
 
 
 
@@ -90,6 +99,9 @@ class LoggableContainer(object):
     def wrapped(self):
         return self._wrapped
 
+    def __getitem__(self, key):
+        return self.wrapped[key]
+
     def __setitem__(self, key, value):
         if self.debug:
             print("DEBUG: {0} = {1}".format(key, value))
@@ -104,14 +116,16 @@ CONFIG.add_variable(ConfigVar("PROJECT_NAME", prompt="project's name"))
 CONFIG.add_variable(ConfigVar("AUTHOR_NAME", prompt="author's name"))
 CONFIG.add_variable(ConfigVar("AUTHOR_MAIL", prompt="author's email"))
 CONFIG.add_variable(ConfigVar("DESCRIPTION", prompt="project description"))
-CONFIG.add_variable(ConfigVar("PYTHON_VER", prompt="Python version",
-                              f_default=lambda vals: "{0}.{1}".format(*sys.version_info[:2]))
 
-home = os.path.userexpand("~")
+fpyver = lambda vals: "{0}.{1}".format(*sys.version_info[:2])
+CONFIG.add_variable(ConfigVar("PYTHON_VER", prompt="Python version",
+                              f_default=fpyver))
+
+home = os.path.expanduser("~")
 defdir = lambda vals: os.path.join(home, "Documents", vals["PROJECT_NAME"])
 
 CONFIG.add_variable(ConfigVar("PROJECT_DIR", prompt="project directory", f_default=defdir))
-CONFIG.add_variable(ConfigVar("PYPATH", prompt="additional search paths (comma sep)")
+CONFIG.add_variable(ConfigVar("PYPATH", prompt="additional search paths (comma sep)"))
 
 
 def create_project_tree(var_dict):
