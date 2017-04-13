@@ -1,26 +1,22 @@
 '''
 Script that replicates and environment for a python data science project
-author: Andreu Mora (andreu.mora@gmail.com)
+author: Andreu Mora (andreu.mora@gmail.com), Tobias Guggenmoser (t.guggenmoser@gmail.com)
 '''
 
 import os
 import getpass
 import json
+import sys
+import shutil
 
-debug = False
-var_dict = {}
-
-def raise_error (msg):
-	print ("[ERROR]: " + msg)
-	exit()
-
-def confirm_var (var, value):
-	if debug:
-		print ("[DEBUG] Variable = " + var + " set to " + str(value))
-	var_dict[var] = value
-
+DEBUG = False
+WGPATH = os.path.dirname(os.path.realpath(__file__))
 
 class ConfigVar(object):
+    """
+    Handle a single configuration variable.
+    """
+
 
     def __init__(self, name, f_default=None, description="", prompt=""):
         self.name = name
@@ -35,6 +31,10 @@ class ConfigVar(object):
 
 
 class Config(object):
+    """
+    Handle collection of ConfigVar`s.
+    """
+
 
     def __init__(self, interact=True):
         self.variables = []
@@ -45,7 +45,7 @@ class Config(object):
         self.variables.append(var)
 
     def evaluate(self, dct):
-        values = VarDict(debug=DEBUG)
+        values = LoggableContainer({}, debug=DEBUG)
         for v in self.variables:
             val = None
             if v.name in dct:
@@ -59,6 +59,10 @@ class Config(object):
 
 
 def prompt_var(v, default=None):
+    """
+    Get user input for ConfigVar v.
+    """
+
     p = v.prompt
     if not p:
         p = v.name
@@ -72,19 +76,26 @@ def prompt_var(v, default=None):
 
 
 
-class VarDict(object):
+class LoggableContainer(object):
+    """
+    Wrapper with optional debug output for .__getitem__().
+    """
 
-    def __init__(self, debug=False):
-        self.var_dict = {}
+    def __init__(self, wrap, debug=False):
+        self._wrapped = wrap
         self.debug = debug
+
+    @property
+    def wrapped(self):
+        return self._wrapped
 
     def __setitem__(self, key, value):
         if self.debug:
             print("DEBUG: {0} = {1}".format(key, value))
-        self.var_dict[key] = value
+        self.wrapped[key] = value
 
     def __getattr__(self, name):
-        return getattr(self.var_dict, name)
+        return getattr(self.wrapped, name)
 
 
 CONFIG = Config()
@@ -92,11 +103,46 @@ CONFIG.add_variable(ConfigVar("PROJECT_NAME", prompt="project's name"))
 CONFIG.add_variable(ConfigVar("AUTHOR_NAME", prompt="author's name"))
 CONFIG.add_variable(ConfigVar("AUTHOR_MAIL", prompt="author's email"))
 CONFIG.add_variable(ConfigVar("DESCRIPTION", prompt="project description"))
+CONFIG.add_variable(ConfigVar("PYTHON_VER", prompt="Python version",
+                              f_default=lambda vals: "{0}.{1}".format(*sys.version_info[:2]))
 
 home = os.path.userexpand("~")
 defdir = lambda vals: os.path.join(home, "Documents", vals["PROJECT_NAME"])
 
 CONFIG.add_variable(ConfigVar("PROJECT_DIR", prompt="project directory", f_default=defdir))
+CONFIG.add_variable(ConfigVar("PYPATH", prompt="additional search paths (comma sep)")
+
+
+def create_project_tree(var_dict):
+
+    root = var_dict["PROJECT_DIR"]
+    if os.path.exists(root):
+        raise ValueError("Directory {0} already exists. Aborting.".format(root))
+
+    tree = {
+        'figures': {},
+        'notebook': {},
+        'output': {},
+        'config': {
+            'scripts': {},
+            },
+        'data': {
+            'in': {},
+            'out': {},
+            'tmp': {},
+            },
+        'src': {},
+        }
+
+    def mktree(tr, base=root):
+        for subtr_name, subtr in tr.items():
+            subtr_path = os.path.join(base, subtr_name)
+            print("Creating directory {0}...".format(subtr_path))
+            os.mkdir(subtr_path)
+            mktree(subtr, base=subtr_path)
+
+    mktree(tree)
+
 
 
 def main(args):
@@ -111,112 +157,61 @@ def main(args):
 
     var_dict = CONFIG.evaluate(dct)
 
+    create_project_tree(var_dict["PROJECT_DIR"])
 
+    conda_cmd = " ".join(["conda create",
+                          "--name", var_dict["PROJECT_NAME"],
+                          "--python", var_dict["PYTHON_VER"]])
+    ret_conda = os.system(conda_cmd)
+    if ret_conda:
+        raise RuntimeError("Conda environment could not be created, see log for errors")
 
-# # Prompt for project variables
-# PROJECT_NAME = input("Please enter the project name []: ")
-# if PROJECT_NAME == "":
-# 	raise_error("The project name cannot be left empty")
-# confirm_var('PROJECT_NAME', PROJECT_NAME)
+    shutil.copy(os.path.join(WGPATH, "support", "template", "__init__.py"),
+                os.path.join(var_dict["PROJECT_DIR"], "src"))
 
-# # Prompt for author and email
-# AUTHOR_NAME = input("Enter author's name: ")
-# confirm_var('AUTHOR_NAME', AUTHOR_NAME)
-# AUTHOR_MAIL = input("Enter author's email: ")
-# confirm_var('AUTHOR_MAIL', AUTHOR_MAIL)
-# DESCRIPTION = input("Enter the project description: ")
-# confirm_var('DESCRIPTION', DESCRIPTION)
+    PYTHONPATH_LIST = [os.path.join(var_dict["PROJECT_DIR"], "src")]
+    PYTHONPATH_LIST.extend(var_dict["PYPATH"].split(','))
 
+    print ("External codebases can be added later on to PYTHONPATH manager in project_vars.json")
 
-# Project folder
-default_dir = "/home/"+getpass.getuser()+"/Documents/"+PROJECT_NAME
-dir_ok = False
-while not dir_ok:
-	PROJECT_DIR = input ("Project directory ["+default_dir+"]: ")
-	if PROJECT_DIR == "":
-		PROJECT_DIR = default_dir
-	if not os.path.exists(PROJECT_DIR):
-		confirm_var('PROJECT_DIR', PROJECT_DIR)
-		os.makedirs(PROJECT_DIR)
-		dir_ok = True
-	else:
-		raise_error("Selected directory already exists, choose a different one")
+    def install(src, dst):
+        src = src.split("/")
+        dst = dst.split("/")
+        shutil.copy(os.path.join(WGPATH, "support", *src),
+                    os.path.join(var_dict["PROJECT_DIR"], *dst))
 
-# Create all the folders needed in the selected directory
-folder_list = ['figures', 'notebook', 'output', 'config', 'data', 'test', 'wiki']
-foo = [os.makedirs(os.path.join(PROJECT_DIR, x)) for x in folder_list]
-subfolder_dict = { 'config':['scripts'], 'data': ['in', 'out', 'tmp']}
-for i in subfolder_dict.keys():
-	for j in subfolder_dict[i]:
-		os.makedirs(os.path.join(PROJECT_DIR, i, j))
+    install("template/conda_setup.json", "config")
+    install("template/.gitignore", ".")
+    install("template/wiki.md", "wiki")
 
+    scripts = ["setenv.py", "get_env_name.py", "get_env_dir.py", "get_env_pythonpath.py"]
+    for script in scripts:
+        install("scripts/{0}".format(script), "config/scripts")
+    install("scripts/setenv.sh", ".")
 
+    with open(os.path.join(PROJECT_DIR, "README.md"), 'w') as text_file:
 
-# Create a specific conda environment
-python_ok = False
-default_python_ver = '3.6'
-while not python_ok:
-	PYTHON_VER = input("Select the Python version (["+default_python_ver+"], 2.7): ")
-	if PYTHON_VER == '':
-		PYTHON_VER = '3.6'
-	if PYTHON_VER == '3.6' or PYTHON_VER == '2.7':
-		python_ok = True
-		confirm_var ('PYTHON_VER', PYTHON_VER)
-		ret_conda = os.system("conda create --name "+PROJECT_NAME+" python="+PYTHON_VER)
-		if ret_conda != 0:
-			raise_error("Conda environment could not be created, see log for errors")
+        def writeln(s=""):
+            text_file.write(s.format(**var_dict) + "\n")
 
-# Create a pointer in src to the codebase
-os.makedirs(os.path.join(PROJECT_DIR, 'src'))
-os.system("cp ./support/template/__init__.py "+os.path.join(PROJECT_DIR,'src'))
-PYTHONPATH_LIST = [os.path.join(PROJECT_DIR, 'src')]
-use_external = input("Use external codebase ([y]/n)?: ")
-if use_external=="y" or use_external=="":
-	src_ok = False
-	while not src_ok:
-		new_src_dir = input("Type the directory where the codebase is: ")
-		if new_src_dir != "":
-			PYTHONPATH_LIST.append(new_src_dir)
-			add_more = input ("Add another external codebase? (y/[n])?: ")
-			if add_more.lower() == 'y':
-				src_ok = False
-			else:
-				src_ok = True
-		else:
-			print ("Not valid. External codebase cannot be left empty")
-print ("External codebases can be added later on to PYTHONPATH manager in project_vars.json")
-confirm_var ('PYTHONPATH_LIST', PYTHONPATH_LIST)
-
-# Copy the scripts and default items
-os.system("cp ./support/template/conda_setup.json "+os.path.join(PROJECT_DIR,'config'))
-os.system("cp ./support/template/.gitignore "+os.path.join(PROJECT_DIR))
-os.system("cp ./support/template/wiki.md "+os.path.join(PROJECT_DIR, 'wiki'))
-os.system("cp ./support/scripts/setenv.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
-os.system("cp ./support/scripts/get_env_name.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
-os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
-os.system("cp ./support/scripts/get_env_dir.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
-os.system("cp ./support/scripts/get_env_pythonpath.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
-os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
-
-# Create a README file
-text_file = open(os.path.join(PROJECT_DIR, "README.md"), "w")
-text_file.write("## Project "+PROJECT_NAME+"\n")
-text_file.write(DESCRIPTION+"\n\n\n")
-text_file.write("Author: "+AUTHOR_NAME+" ("+AUTHOR_MAIL+")\n")
-text_file.write("## Dependencies\n")
-text_file.write("* Needs python 3 to execute the installation script\n")
-text_file.write("* Needs conda to manage virtual environments\n")
-text_file.write("* Virtual environment dependencies can be found in config/conda_setup.json\n\n")
-text_file.write("Project template created with Wet Gremlin (https://github.com/drublackberry/wet-gremlin)\n")
-text_file.close()
+        writeln("## Project {PROJECT_NAME}")
+        writeln("{DESCRIPTION}")
+        writeln()
+        writeln()
+        writeln("Author: {AUTHOR_NAME} <{AUTHOR_MAIL}>")
+        writeln("## Dependencies")
+        writeln("* Needs python 3 to execute the installation script")
+        writeln("* Needs conda to manage virtual environments")
+        writeln("* Virtual environment dependencies can be found in config/conda_setup.json")
+        writeln("Project template created with Wet Gremlin (https://github.com/drublackberry/wet-gremlin)")
 
 # Store the environment variables in a json file
 with open(os.path.join(PROJECT_DIR,'config', 'project_vars.json'), 'w') as fp:
-	json.dump(var_dict,fp, indent=4, sort_keys=True)
+    json.dump(var_dict.wrapped, fp, indent=4, sort_keys=True)
 
 # Configure git
 try:
-	os.chdir(PROJECT_DIR)
+	os.chdir(var_dict["PROJECT_DIR"])
 	print(os.getcwd())
 	os.system("git init")
 	os.system("git add .")
