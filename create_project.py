@@ -8,6 +8,7 @@ import getpass
 import json
 import sys
 import shutil
+import argparse
 
 DEBUG = False
 WGPATH = os.path.dirname(os.path.realpath(__file__))
@@ -205,21 +206,28 @@ def main(args):
         writeln("* Virtual environment dependencies can be found in config/conda_setup.json")
         writeln("Project template created with Wet Gremlin (https://github.com/drublackberry/wet-gremlin)")
 
-# Store the environment variables in a json file
-with open(os.path.join(PROJECT_DIR,'config', 'project_vars.json'), 'w') as fp:
-    json.dump(var_dict.wrapped, fp, indent=4, sort_keys=True)
+        # Store the environment variables in a json file
+        with open(os.path.join(PROJECT_DIR,'config', 'project_vars.json'), 'w') as fp:
+            json.dump(var_dict.wrapped, fp, indent=4, sort_keys=True)
 
-# Configure git
-try:
-	os.chdir(var_dict["PROJECT_DIR"])
-	print(os.getcwd())
-	os.system("git init")
-	os.system("git add .")
-	os.system("git commit -m \"First commit from project creation \"")
-	REMOTE_GIT_ADD = input("Add remote git repository? ([y]/n): ")
-	if REMOTE_GIT_ADD.lower() == 'y' or REMOTE_GIT_ADD == '':
-		REMOTE_GIT = input("Enter remote address: ")
-		os.system("git remote add origin "+REMOTE_GIT)
-		os.system("git push -u origin master")
-except:
-	print ("[ERROR] Git not installed or not configured. Try manually.")
+            # Configure git
+        try:
+            os.chdir(var_dict["PROJECT_DIR"])
+            print(os.getcwd())
+            os.system("git init")
+            os.system("git add .")
+            os.system("git commit -m \"First commit from project creation \"")
+            REMOTE_GIT_ADD = input("Add remote git repository? ([y]/n): ")
+            if REMOTE_GIT_ADD.lower() == 'y' or REMOTE_GIT_ADD == '':
+                REMOTE_GIT = input("Enter remote address: ")
+                os.system("git remote add origin "+REMOTE_GIT)
+                os.system("git push -u origin master")
+        except:
+            raise RuntimeError("Git not installed or not configured. Try manually.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", default="", type=str, help="configuration file")
+    args = parser.parse_args()
+    main(args)
