@@ -51,7 +51,7 @@ while not dir_ok:
 		raise_error("Selected directory already exists, choose a different one")
 
 # Create all the folders needed in the selected directory
-folder_list = ['figures', 'notebook', 'output', 'config', 'data', 'test', 'wiki']
+folder_list = ['notebook', 'output', 'config', 'data', 'test', 'wiki']
 foo = [os.makedirs(os.path.join(PROJECT_DIR, x)) for x in folder_list]
 subfolder_dict = { 'config':['scripts'], 'data': ['in', 'out', 'tmp']}
 for i in subfolder_dict.keys():
@@ -105,6 +105,8 @@ os.system("cp ./support/scripts/get_env_src.py "+os.path.join(PROJECT_DIR, 'conf
 os.system("cp ./support/scripts/get_env_dir.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/get_env_pythonpath.py "+os.path.join(PROJECT_DIR, 'config', 'scripts'))
 os.system("cp ./support/scripts/setenv.sh "+PROJECT_DIR)
+os.system("cp ./support/scripts/wgutils.py "+os.path.join(PROJECT_DIR, 'src'))
+
 
 # Create a README file
 text_file = open(os.path.join(PROJECT_DIR, "README.md"), "w")
